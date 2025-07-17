@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grade 9 West Memories Wall ❤️📸</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 8px #000; }
+        .version { font-size: 12px; color: #ccc; margin-bottom: 20px; }
+
+        #loginUploader, #uploadForm, #backupForm {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px #000;
+            margin: 10px auto 30px auto;
+            width: 90%; max-width: 400px;
+        }
+
+        input, textarea, button {
+            padding: 10px; margin: 5px; border-radius: 8px; border: none;
+            width: 90%; max-width: 350px; font-size: 1em; outline: none;
+        }
+
+        button {
+            background: #ff4081; color: white; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        button:hover { background: #ff5c8d; box-shadow: 0 0 10px #ff80ab; }
+
+        #gallery {
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .memory {
+            background: rgba(255,255,255,0.08);
+            margin: 15px 0; padding: 15px; border-radius: 15px;
+            width: 90%; max-width: 350px; box-shadow: 0 0 15px #000;
+        }
+
+        .memory img, .memory video {
+            width: 100%; max-height: 350px; object-fit: cover; border-radius: 15px; margin-bottom: 10px;
+        }
+
+        .caption { font-style: italic; color: #ddd; margin-bottom: 5px; }
+        .date { font-size: 11px; color: #bbb; margin-bottom: 10px; }
+
+        .actions {
+            display: flex; justify-content: space-between; align-items: center; margin: 5px 0;
+        }
+
+        .likeBtn {
+            background: none; border: none; font-size: 20px; cursor: pointer; transition: 0.3s;
+        }
+        .likeBtn.liked { color: #ff4081; transform: scale(1.2); }
+
+        .comments { background: rgba(255,255,255,0.1); padding: 8px; border-radius: 8px; margin-top: 5px; text-align: left; max-height: 100px; overflow-y: auto; }
+        .comments p { margin: 3px 0; font-size: 13px; }
+        .commentInput { width: 90%; margin-top: 5px; padding: 5px; border-radius: 5px; border: none; }
+        .commentBtn { margin-top: 5px; background: #00c853; color: white; padding: 5px 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 12px; }
+
+        footer { margin-top: 40px; font-size: 12px; color: #ccc; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <h1> Memories Wall</h1>
+    <div class="version">Version 3.0 | Private Upload ❤️📸</div>
+
+    <!-- Login form for uploader -->
+    <div id="loginUploader">
+        <input type="password" id="passwordInput" placeholder="Uploader Password"><br>
+        <button onclick="checkLogin()">Login to Upload</button>
+    </div>
+
+    <!-- Upload form (hidden until login) -->
+    <div id="uploadForm" style="display:none;">
+        <input type="file" id="fileInput" accept="image/*,video/*"><br>
+        <textarea id="captionInput" placeholder="Write a caption..."></textarea><br>
+        <button onclick="addMemory()">Upload Memory</button>
+    </div>
+
+    <!-- Backup system -->
+    <div id="backupForm">
+        <button onclick="backupMemories()">Download Backup</button>
+        <input type="file" id="importInput" accept=".json" onchange="importMemories()"><br>
+        <small style="color:#ccc;">Import your backup file here.</small>
+    </div>
+
+    <!-- Gallery display -->
+    <div id="gallery"></div>
+
+    <footer>
+        Made with ❤️ by Grade 9 West | Lover Boy Memory System
+    </footer>
+
+    <script>
+        const UPLOAD_PASSWORD = "2025"; // Change this to your secret password
+
+        let memories = JSON.parse(localStorage.getItem("grade9BackupMemories")) || [];
+
+        function checkLogin() {
+            const input = document.getElementById('passwordInput').value;
+            if (input === UPLOAD_PASSWORD) {
+                document.getElementById('uploadForm').style.display = 'block';
+                document.getElementById('loginUploader').style.display = 'none';
+                alert("Uploader access granted! Welcome Lover Boy ❤️");
+            } else {
+                alert("Wrong password! Only Lover Boy can upload.");
+            }
+        }
+
+        function addMemory() {
+            const file = document.getElementById('fileInput').files[0];
+            const caption = document.getElementById('captionInput').value.trim();
+
+            if (!file || caption === "") {
+                alert("Please select a photo/video and write a caption.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const memory = {
+                    id: Date.now(),
+                    type: file.type.startsWith('video') ? 'video' : 'photo',
+                    media: e.target.result,
+                    caption: caption,
+                    date: new Date().toLocaleString(),
+                    comments: [],
+                    likes: 0,
+                    liked: false
+                };
+                memories.push(memory);
+                localStorage.setItem("grade9BackupMemories", JSON.stringify(memories));
+                displayGallery();
+            };
+            reader.readAsDataURL(file);
+
+            document.getElementById('fileInput').value = "";
+            document.getElementById('captionInput').value = "";
+        }
+
+        function displayGallery() {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = "";
+
+            memories.slice().reverse().forEach(memory => {
+                let mediaHtml = memory.type === "photo" ? 
+                    `<img src="${memory.media}" alt="Memory">` : 
+                    `<video src="${memory.media}" controls></video>`;
+
+                let commentsHtml = memory.comments.map(c=>`<p>💬 ${c}</p>`).join("");
+
+                gallery.innerHTML += `
+                    <div class="memory">
+                        ${mediaHtml}
+                        <div class="caption">${memory.caption}</div>
+                        <div class="date">${memory.date}</div>
+                        <div class="actions">
+                            <button class="likeBtn ${memory.liked?'liked':''}" onclick="toggleLike(${memory.id})">❤️ ${memory.likes}</button>
+                        </div>
+                        <div class="comments">${commentsHtml || "<i>No comments yet</i>"}</div>
+                        <input type="text" id="commentInput-${memory.id}" class="commentInput" placeholder="Add a comment...">
+                        <button class="commentBtn" onclick="addComment(${memory.id})">Comment</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addComment(id) {
+            const input = document.getElementById(`commentInput-${id}`);
+            const text = input.value.trim();
+            if (text==="") return;
+            const m = memories.find(m=>m.id===id);
+            m.comments.push(text);
+            localStorage.setItem("grade9BackupMemories", JSON.stringify(memories));
+            displayGallery();
+        }
+
+        function toggleLike(id) {
+            const m = memories.find(m=>m.id===id);
+            if (!m.liked) { m.likes++; m.liked=true; }
+            else { m.likes--; m.liked=false; }
+            localStorage.setItem("grade9BackupMemories", JSON.stringify(memories));
+            displayGallery();
+        }
+
+        function backupMemories() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(memories));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "Grade9WestMemoriesBackup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            document.body.removeChild(downloadAnchor);
+        }
+
+        function importMemories() {
+            const file = document.getElementById('importInput').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        memories = imported;
+                        localStorage.setItem("grade9BackupMemories", JSON.stringify(memories));
+                        displayGallery();
+                        alert("Backup restored successfully!");
+                    } else {
+                        alert("Invalid backup file.");
+                    }
+                } catch (err) {
+                    alert("Error reading file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        displayGallery();
+    </script>
+
+</body>
+</html>
